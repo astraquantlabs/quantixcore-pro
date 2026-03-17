@@ -1,20 +1,22 @@
 import express from "express";
 import cors from "cors";
 import fetch from "node-fetch";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// 🔑 ADD YOUR KEYS HERE
-const OPENAI_KEY = "YOUR_OPENAI_KEY";
-const TAVILY_KEY = "YOUR_TAVILY_KEY";
+const OPENAI_KEY = process.env.OPENAI_KEY;
+const TAVILY_KEY = process.env.TAVILY_KEY;
 
 app.post("/chat", async (req, res) => {
   const { message, history } = req.body;
 
   try {
-    // 🔎 1. REAL SEARCH
+    // 🔎 Search API
     const searchRes = await fetch("https://api.tavily.com/search", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -26,9 +28,11 @@ app.post("/chat", async (req, res) => {
     });
 
     const searchData = await searchRes.json();
-    const results = searchData.results.map(r => r.content).join("\n");
+    const results = searchData.results
+      .map(r => r.content)
+      .join("\n");
 
-    // 🧠 2. REAL AI
+    // 🧠 AI API
     const aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -56,12 +60,12 @@ app.post("/chat", async (req, res) => {
 
     res.json({
       reply: aiData.choices[0].message.content,
-      sources: searchData.results.slice(0,3)
+      sources: searchData.results.slice(0, 3)
     });
 
   } catch (err) {
-    res.status(500).json({ error: "Error" });
+    res.status(500).json({ error: "Error processing request" });
   }
 });
 
-app.listen(3000, () => console.log("🚀 AstraQuant v3 running"));
+app.listen(3000, () => console.log("🚀 AstraQuant v3 running on port 3000"));
