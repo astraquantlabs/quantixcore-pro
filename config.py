@@ -1,0 +1,22 @@
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+TOKEN = os.getenv("BOT_TOKEN")
+
+OWNER_ID = 1521878664340570275
+
+PREFIX = "! "
+
+EMBED_COLOR = 0x5865F2
+
+GITHUB_BASE = "https://github.com/YourUsername/NikkiBot"
+
+GAMING_CHANNELS = {
+    1522966431300452615,
+    1521878665464512524,
+}
+
+PYTHON_CHANNEL = 1521878665464512524
+PYTHON_ALL_CHANNELS = True
