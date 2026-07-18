@@ -1,107 +1,33 @@
-import discord
-from discord.ext import commands
-import random
 
-class Utility(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
+import asyncio
 
-    @commands.command()
-    async def say(self, ctx, *, message):
-        """Make the bot repeat a message."""
-        await ctx.message.delete()
-        await ctx.send(message)
+@commands.command()
+async def remind(self, ctx, minutes: int, *, reminder: str):
+    """Set a reminder and DM the user when the time is up."""
 
-    @commands.command()
-    async def echo(self, ctx, *, message):
-        await ctx.send(message)
+    if minutes < 1:
+        return await ctx.send("❌ Time must be at least 1 minute.")
 
-    @commands.command()
-    async def poll(self, ctx, *, question):
-        embed = discord.Embed(
-            title="📊 Poll",
-            description=question,
-            color=discord.Color.blue()
-        )
+    if minutes > 10080:  # 7 days
+        return await ctx.send("❌ Maximum reminder time is 10080 minutes (7 days).")
 
-        msg = await ctx.send(embed=embed)
-        await msg.add_reaction("👍")
-        await msg.add_reaction("👎")
+    embed = discord.Embed(
+        title="⏰ Reminder Set",
+        description=f"**Reminder:** {reminder}",
+        color=discord.Color.gold()
+    )
+    embed.add_field(name="Time", value=f"{minutes} minute(s)")
+    await ctx.send(embed=embed)
 
-    @commands.command()
-    async def choose(self, ctx, *, options):
-        choices = [c.strip() for c in options.split(",")]
+    await asyncio.sleep(minutes * 60)
 
-        if len(choices) < 2:
-            return await ctx.send(
-                "Usage: `pls choose option1, option2, option3`"
-            )
+    reminder_embed = discord.Embed(
+        title="⏰ Reminder",
+        description=reminder,
+        color=discord.Color.gold()
+    )
 
-        await ctx.send(f"🎲 I choose: **{random.choice(choices)}**")
-
-    @commands.command()
-    async def coinflip(self, ctx):
-        await ctx.send(f"🪙 **{random.choice(['Heads', 'Tails'])}**")
-
-    @commands.command(aliases=["dice"])
-    async def roll(self, ctx, sides: int = 6):
-        if sides < 2:
-            sides = 6
-
-        await ctx.send(f"🎲 You rolled **{random.randint(1, sides)}**")
-
-    @commands.command()
-    async def randomnumber(self, ctx, minimum: int, maximum: int):
-        if minimum >= maximum:
-            return await ctx.send("Minimum must be smaller than maximum.")
-
-        await ctx.send(
-            f"🎲 {random.randint(minimum, maximum)}"
-        )
-
-    @commands.command()
-    async def remind(self, ctx, minutes: int, *, reminder):
-        if minutes <= 0:
-            return await ctx.send("Minutes must be greater than 0.")
-
-        await ctx.send(
-            f"⏰ Reminder set for **{minutes}** minute(s)."
-        )
-
-        await discord.utils.sleep_until(
-            discord.utils.utcnow() +
-            discord.timedelta(minutes=minutes)
-        )
-
-        try:
-            await ctx.author.send(
-                f"⏰ Reminder:\n{reminder}"
-            )
-        except discord.Forbidden:
-            await ctx.send(
-                f"{ctx.author.mention} Reminder: {reminder}"
-            )
-
-    @commands.command()
-    async def embed(self, ctx, *, text):
-        embed = discord.Embed(
-            description=text,
-            color=discord.Color.blurple()
-        )
-        await ctx.send(embed=embed)
-
-    @commands.command()
-    async def color(self, ctx):
-        colour = discord.Color.random()
-
-        embed = discord.Embed(
-            title="Random Color",
-            description=str(colour),
-            color=colour
-        )
-
-        await ctx.send(embed=embed)
-
-
-async def setup(bot):
-    await bot.add_cog(Utility(bot))
+    try:
+        await ctx.author.send(embed=reminder_embed)
+    except discord.Forbidden:
+        await ctx.send(f"{ctx.author.mention}", embed=reminder_embed)
